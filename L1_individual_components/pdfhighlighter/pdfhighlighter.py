@@ -1,9 +1,15 @@
-import pymupdf
 import os
+
 import cloudinary
 import cloudinary.uploader
-from cloudinary.utils import cloudinary_url
-from django.conf import settings
+import pymupdf
+
+from config import (
+    CLOUDINARY_API_KEY,
+    CLOUDINARY_API_SECRET,
+    CLOUDINARY_CLOUD_NAME,
+)
+
 
 class PdfHighlighter:
     def __init__(self, pdf_path, ner_dict):
@@ -13,57 +19,41 @@ class PdfHighlighter:
 
     def highlight(self):
         try:
-            print("\n\n\nhighlighting user pdf.....\n")
-            
-            self.list = [key for key in self.ner_dict.keys()]
-            # print(self.list)
+            print("\nHighlighting user PDF...\n")
 
+            self.list = list(self.ner_dict.keys())
             doc = pymupdf.open(self.pdf_path)
-            print(doc,"\n\n\n")
 
             for page in doc:
                 for word in self.list:
-                    instance = page.search_for(word)
-                    for inst in instance:
-                        page.add_highlight_annot(inst)
+                    for instance in page.search_for(word):
+                        page.add_highlight_annot(instance)
 
-            # STATIC_ROOT_PATH = os.path.join(settings.BASE_DIR, settings.STATIC_ROOT)
+            highlighted_pdf_path = os.path.join(".", "static", "highlighted.pdf")
+            doc.save(highlighted_pdf_path)
+            doc.close()
 
-            highligh_pdf_path = os.path.join('./static/', 'highlighted.pdf')
-            # Save the modified PDF
-            print("path for highlight is : ", highligh_pdf_path,"\n\n\n")
-
-            doc.save(highligh_pdf_path)
-            doc.close() 
-
-            # Upload the file to Cloudinary with filename
             cloudinary.config(
-                cloud_name='deziazvyp',
-                api_key='115335176222945',
-                api_secret='-AJDclFmKfBgeaPqfQtbHqd8sgQ'
+                cloud_name=CLOUDINARY_CLOUD_NAME,
+                api_key=CLOUDINARY_API_KEY,
+                api_secret=CLOUDINARY_API_SECRET,
             )
 
-            result = cloudinary.uploader.upload(highligh_pdf_path, public_id='highlighted.pdf', resource_type="raw")
-            print("\n\nResuult is from cloudinary : ", result,"\n\n\n")
-            # Get the URL of the uploaded file
-            temp_url = result.get('secure_url')
+            result = cloudinary.uploader.upload(
+                highlighted_pdf_path,
+                public_id="highlighted.pdf",
+                resource_type="raw",
+            )
+
+            temp_url = result.get("secure_url")
             if not temp_url:
-              raise Exception("Failed to upload file to Cloudinary")
+                raise Exception("Failed to upload file to Cloudinary")
 
-            public_id = result.get('public_id')
-            if not public_id:
-              raise Exception("Failed to retrieve public ID")
-
-            print(public_id)
-
-            # Remove the local file
-            if os.path.exists(highligh_pdf_path):
-              os.remove(highligh_pdf_path)
-            else:
-              raise Exception(f"The file {highligh_pdf_path} does not exist")
+            if os.path.exists(highlighted_pdf_path):
+                os.remove(highlighted_pdf_path)
 
             return temp_url
 
         except Exception as err:
-          print(f"Error occurred while highlighting pdf : {err}")
-
+            print(f"Error occurred while highlighting PDF: {err}")
+            return None
