@@ -3,6 +3,8 @@ import os
 import json
 import google.generativeai as genai
 
+from config import GOOGLE_API_KEY
+
 class TextComparison:   
         
   def __init__(self , paragraphs_template ,paragraphs_contract):
