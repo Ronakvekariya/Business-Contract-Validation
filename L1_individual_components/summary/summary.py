@@ -9,13 +9,15 @@ import os
 
 import google.generativeai as genai
 
+from config import GOOGLE_API_KEY
+
 
 
 class Summary :
     
   def __init__(self):
     # os.environ["GOOGLE_API_KEY"] = 'AIzaSyD6BBJzZsKNJQaCd7yr6r-IIfpIkKaQ0kg'
-    genai.configure(api_key= "AIzaSyD6BBJzZsKNJQaCd7yr6r-IIfpIkKaQ0kg")
+    genai.configure(api_key=GOOGLE_API_KEY)
 
     # Create the model
     generation_config = {
